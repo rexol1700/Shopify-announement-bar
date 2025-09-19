@@ -1,0 +1,267 @@
+{% comment %} Get page-specific settings or use defaults {% endcomment %}
+{% liquid
+  assign show_announcement = true
+  assign announcement_items = ""
+  assign bg_color = "#000000"
+  assign text_color = "#ffffff"
+  
+  case template.name
+    when 'product'
+      if product.metafields.custom.hide_announcement == true
+        assign show_announcement = false
+      endif
+      if product.metafields.custom.announcement_items != blank
+        assign announcement_items = product.metafields.custom.announcement_items
+      endif
+      if product.metafields.custom.announcement_bg != blank
+        assign bg_color = product.metafields.custom.announcement_bg
+      endif
+      if product.metafields.custom.announcement_text_color != blank
+        assign text_color = product.metafields.custom.announcement_text_color
+      endif
+    when 'page'
+      if page.metafields.custom.hide_announcement == true
+        assign show_announcement = false
+      endif
+      if page.metafields.custom.announcement_items != blank
+        assign announcement_items = page.metafields.custom.announcement_items
+      endif
+      if page.metafields.custom.announcement_bg != blank
+        assign bg_color = page.metafields.custom.announcement_bg
+      endif
+      if page.metafields.custom.announcement_text_color != blank
+        assign text_color = page.metafields.custom.announcement_text_color
+      endif
+    when 'collection'
+      if collection.metafields.custom.hide_announcement == true
+        assign show_announcement = false
+      endif
+      if collection.metafields.custom.announcement_items != blank
+        assign announcement_items = collection.metafields.custom.announcement_items
+      endif
+      if collection.metafields.custom.announcement_bg != blank
+        assign bg_color = collection.metafields.custom.announcement_bg
+      endif
+      if collection.metafields.custom.announcement_text_color != blank
+        assign text_color = collection.metafields.custom.announcement_text_color
+      endif
+  endcase
+  
+  if announcement_items == blank
+    assign announcement_items = "Livstidsgaranti, Gratis frakt,"
+  endif
+  
+  assign items_array = announcement_items | split: ','
+%}
+
+{% if show_announcement %}
+<div class="global-trust-bar" style="--bg-color: {{ bg_color }}; --text-color: {{ text_color }};">
+  <div class="trust-wrapper">
+    <button class="nav-arrow nav-prev" aria-label="Previous item">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M7.5 9L4.5 6L7.5 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    
+    <div class="trust-content">
+      {% for item in items_array %}
+        <div class="trust-item {% if forloop.first %}active{% endif %}">
+          {{ item | strip }}
+        </div>
+      {% endfor %}
+    </div>
+    
+    <button class="nav-arrow nav-next" aria-label="Next item">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+        <path d="M4.5 3L7.5 6L4.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.global-trust-bar {
+  background: var(--bg-color);
+  color: var(--text-color);
+  padding: 12px 0;
+  text-align: center;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  
+  /* Take it out of document flow */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+  
+  /* Smooth slide transition */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  transform: translateY(0);
+}
+
+.global-trust-bar .trust-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+  gap: 20px;
+}
+
+.global-trust-bar .trust-content {
+  position: relative;
+  height: 20px;
+  flex: 1;
+  max-width: 600px;
+}
+
+.global-trust-bar .trust-item {
+  position: absolute;
+  width: 100%;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  text-align: center;
+}
+
+.global-trust-bar .trust-item.active {
+  opacity: 1;
+}
+
+.global-trust-bar .nav-arrow {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.7;
+}
+
+.global-trust-bar .nav-arrow:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Add top padding to body to compensate for fixed positioning */
+body {
+  padding-top: 48px; /* Adjust based on your trust bar height */
+}
+
+/* Remove padding when trust bar is hidden */
+body.trust-bar-hidden {
+  padding-top: 0;
+  transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (max-width: 768px) {
+  .global-trust-bar {
+    padding: 10px 0;
+    font-size: 14px;
+  }
+  
+  .global-trust-bar .trust-wrapper {
+    padding: 0 16px;
+    gap: 12px;
+  }
+  
+  body {
+    padding-top: 40px; /* Smaller padding for mobile */
+  }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const trustBar = document.querySelector('.global-trust-bar');
+  if (!trustBar) return;
+  
+  const items = trustBar.querySelectorAll('.trust-item');
+  const prevBtn = trustBar.querySelector('.nav-prev');
+  const nextBtn = trustBar.querySelector('.nav-next');
+  const totalItems = items.length;
+  
+  if (totalItems <= 1) {
+    if (prevBtn) prevBtn.style.display = 'none';
+    if (nextBtn) nextBtn.style.display = 'none';
+    return;
+  }
+  
+  let currentIndex = 0;
+  let interval;
+  let ticking = false;
+  
+  function showNext() {
+    items[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex + 1) % totalItems;
+    items[currentIndex].classList.add('active');
+  }
+  
+  function showPrev() {
+    items[currentIndex].classList.remove('active');
+    currentIndex = (currentIndex - 1 + totalItems) % totalItems;
+    items[currentIndex].classList.add('active');
+  }
+  
+  function startRotation() {
+    interval = setInterval(showNext, 4000);
+  }
+  
+  function stopRotation() {
+    clearInterval(interval);
+  }
+  
+  // Slide up and manage body padding
+  function handleScroll() {
+    const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+    const hideThreshold = 10;
+    
+    if (scrollTop >= hideThreshold) {
+      // Hide trust bar and remove body padding
+      trustBar.style.transform = 'translateY(-100%)';
+      document.body.classList.add('trust-bar-hidden');
+    } else {
+      // Show trust bar and restore body padding
+      trustBar.style.transform = 'translateY(0)';
+      document.body.classList.remove('trust-bar-hidden');
+    }
+    
+    ticking = false;
+  }
+  
+  function requestTick() {
+    if (!ticking) {
+      requestAnimationFrame(handleScroll);
+      ticking = true;
+    }
+  }
+  
+  if (nextBtn) {
+    nextBtn.addEventListener('click', function() {
+      stopRotation();
+      showNext();
+      startRotation();
+    });
+  }
+  
+  if (prevBtn) {
+    prevBtn.addEventListener('click', function() {
+      stopRotation();
+      showPrev();
+      startRotation();
+    });
+  }
+  
+  window.addEventListener('scroll', requestTick, { passive: true });
+  
+  startRotation();
+});
+</script>
